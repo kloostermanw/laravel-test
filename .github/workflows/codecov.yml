@@ -94,3 +94,9 @@ jobs:
           XDEBUG_MODE: coverage
         run: |
           vendor/bin/phpunit --coverage-clover ./coverage.xml
+
+      - name: Coverage report
+        uses: kloostermanw/php-code-coverage@master
+        with:
+          file: ./src/coverage.xml
+          files: ${{ env.final_files }}
