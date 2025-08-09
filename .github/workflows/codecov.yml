@@ -81,9 +81,15 @@ jobs:
 
       - name: PHPUnit Tests
         working-directory: "src"
+        run: |
+          cp .env.example .env
+          php artisan config:cache
+          php artisan key:generate
+          php artisan migrate:fresh --seed
+
+      - name: PHPUnit Tests
+        working-directory: "src"
         env:
           XDEBUG_MODE: coverage
         run: |
-          artisan key:generate
-          php artisan migrate:fresh --seed
           vendor/bin/phpunit --coverage-clover ./coverage.xml
