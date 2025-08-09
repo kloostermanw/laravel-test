@@ -100,5 +100,5 @@ jobs:
         with:
           file: ./src/coverage.xml
           files: ${{ env.final_files }}
-          workflow-path: '/home/runner/work/laravel-test/laravel-test/src'
-          repo-path: 'src'
+          workflow-path: '/home/runner/work/laravel-test/laravel-test/'
+          repo-path: ''
