@@ -82,6 +82,7 @@ jobs:
       - name: PHPUnit Tests
         working-directory: "src"
         run: |
+          touch database/database.sqlite
           cp .env.example .env
           php artisan config:cache
           php artisan key:generate
