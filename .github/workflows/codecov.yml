@@ -79,7 +79,7 @@ jobs:
           extensions: pdo, pdo_mysql, opcache, redis, mysql
           coverage: xdebug
 
-      - name: PHPUnit Tests
+      - name: Install Dependencies
         working-directory: "src"
         run: |
           touch database/database.sqlite
