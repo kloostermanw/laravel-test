@@ -100,3 +100,5 @@ jobs:
         with:
           file: ./src/coverage.xml
           github-token: ${{ secrets.GITHUB }}
+          with-chart: false
+          pull-request-files: ${{ env.final_files }}
