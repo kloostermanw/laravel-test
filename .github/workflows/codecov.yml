@@ -99,3 +99,4 @@ jobs:
         uses: kloostermanw/code-coverage@master
         with:
           file: ./src/coverage.xml
+          github-token: ${{ secrets.GITHUB }}
