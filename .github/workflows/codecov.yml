@@ -4,7 +4,7 @@ on:
   pull_request:
 
 jobs:
-  get-changed-files:
+  test-code-coverage:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -96,9 +96,6 @@ jobs:
           vendor/bin/phpunit --coverage-clover ./coverage.xml
 
       - name: Coverage report
-        uses: kloostermanw/php-code-coverage@master
+        uses: kloostermanw/code-coverage@master
         with:
           file: ./src/coverage.xml
-          files: ${{ env.final_files }}
-          workflow-path: '/home/runner/work/laravel-test/laravel-test/'
-          repo-path: ''
