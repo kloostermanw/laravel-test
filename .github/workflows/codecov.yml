@@ -1,6 +1,5 @@
 name: codecov.yml
 on:
-  push:
   pull_request:
 
 jobs:
