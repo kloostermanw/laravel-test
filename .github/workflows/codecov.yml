@@ -27,17 +27,21 @@ jobs:
         if: ${{ github.event_name == 'pull_request' }}
         id: pull_request_files2
         run: |
-          echo "Changed files and line changes (PR):"
+          echo "Changed files and line numbers:"
           curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             "${{ github.api_url }}/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/files" \
-            | jq -r '.[] | "\(.filename)\n---\n\(.patch // "No patch available")\n"' > changes_with_lines.txt
-          
-          cat changes_with_lines.txt
-          
-          # Just filenames for later steps
-          grep -v '^---$' changes_with_lines.txt | grep -v '^@@' | grep -v '^+' | grep -v '^- ' | grep -v '^$' > changed_files.txt
-          echo "files=$(paste -sd, changed_files.txt)" >> $GITHUB_OUTPUT2
-
+          | jq -r '.[] | {file: .filename, patch: .patch} | select(.patch != null)' \
+          | jq -r '
+          .file as $file |
+          .patch
+          | split("\n")
+          | map(select(startswith("@@")))
+          | map(
+              capture("@@ -(?<old_start>[0-9]+)(,(?<old_count>[0-9]+))? \\+(?<new_start>[0-9]+)(,(?<new_count>[0-9]+))? @@")
+              | "\($file): \(.new_start)-\((.new_start | tonumber) + ((.new_count // "1") | tonumber) - 1)"
+            )
+          | .[]
+          '
 
       - name: Use final files
         run: |
