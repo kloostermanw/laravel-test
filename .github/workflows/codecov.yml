@@ -19,9 +19,30 @@ jobs:
           curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             "${{ github.api_url }}/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/files" \
             | jq -r '.[].filename' > changed_files.txt
-          
           cat changed_files.txt
           echo "files=$(paste -sd, changed_files.txt)" >> $GITHUB_OUTPUT
+
+
+      - name: Get changed files and line changes for Pull Request
+        if: ${{ github.event_name == 'pull_request' }}
+        id: pull_request_files
+        run: |
+          echo "Changed files and line changes (PR):"
+          curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            "${{ github.api_url }}/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/files" \
+            | jq -r '.[] | "\(.filename)\n---\n\(.patch // "No patch available")\n"' > changes_with_lines.txt
+          
+          cat changes_with_lines.txt
+          
+          # Just filenames for later steps
+          grep -v '^---$' changes_with_lines.txt | grep -v '^@@' | grep -v '^+' | grep -v '^- ' | grep -v '^$' > changed_files.txt
+          echo "files=$(paste -sd, changed_files.txt)" >> $GITHUB_OUTPUT2
+
+
+      - name: Use final files
+        run: |
+          echo "files: $files"
+          
 
       - name: Get changed files for Push
         if: ${{ github.event_name == 'push' }}
@@ -48,6 +69,7 @@ jobs:
           cat changed_files.txt
           echo "files=$(paste -sd, changed_files.txt)" >> $GITHUB_OUTPUT
 
+
       - name: Set final files variable
         run: |
           FILES="${{ steps.pull_request_files.outputs.files }}"
@@ -56,9 +78,11 @@ jobs:
           fi
           echo "final_files=$FILES" >> $GITHUB_ENV
 
+
       - name: Use final files
         run: |
           echo "Final files: $final_files"
+
 
       - name: Cache Composer dependencies
         uses: actions/cache@v4
@@ -66,10 +90,12 @@ jobs:
           path: /tmp/composer-cache
           key: ${{ runner.os }}-${{ hashFiles('**/composer.lock') }}
 
+
       - uses: php-actions/composer@v6
         with:
           args: "--ignore-platform-reqs --no-scripts"
           working_dir: "src"
+
 
       - name: Setup PHP with PECL extension
         uses: shivammathur/setup-php@v2
@@ -77,6 +103,7 @@ jobs:
           php-version: '8.3'
           extensions: pdo, pdo_mysql, opcache, redis, mysql
           coverage: xdebug
+
 
       - name: Install Dependencies
         working-directory: "src"
@@ -87,12 +114,14 @@ jobs:
           php artisan config:cache
           php artisan migrate:fresh --seed
 
+
       - name: PHPUnit Tests
         working-directory: "src"
         env:
           XDEBUG_MODE: coverage
         run: |
           vendor/bin/phpunit --coverage-clover ./coverage.xml
+
 
       - name: Coverage report
         uses: kloostermanw/code-coverage@master
