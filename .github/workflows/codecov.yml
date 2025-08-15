@@ -87,7 +87,7 @@ jobs:
 
       - name: Use final files
         run: |
-          echo "Final files: $final_files"
+          echo "pr_files: $pr_files"
 
 
       - name: Cache Composer dependencies
