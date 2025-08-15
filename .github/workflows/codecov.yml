@@ -43,7 +43,7 @@ jobs:
           | .[]
           ' > changed_files.txt
           cat changed_files.txt
-          echo "pr_files=$(paste -sd, changed_files.txt)"
+          echo "pr_files=$(paste -sd, changed_files.txt)" >> $GITHUB_OUTPUT
 
 #      - name: Use final files
 #        run: |
