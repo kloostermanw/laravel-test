@@ -32,18 +32,24 @@ jobs:
             "${{ github.api_url }}/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/files" \
           | jq -r '.[] | {file: .filename, patch: .patch} | select(.patch != null)' \
           | jq -r '
-          .file as $file |
-          .patch
-          | split("\n")
-          | map(select(startswith("@@")))
-          | map(
-              capture("@@ -(?<old_start>[0-9]+)(,(?<old_count>[0-9]+))? \\+(?<new_start>[0-9]+)(,(?<new_count>[0-9]+))? @@")
-              | "\($file): \(.new_start)-\((.new_start | tonumber) + ((.new_count // "1") | tonumber) - 1)"
-            )
-          | .[]
-          ')
+            .file as $file |
+            .patch
+            | split("\n")
+            | map(select(startswith("@@")))
+            | map(
+                capture("@@ -(?<old_start>[0-9]+)(,(?<old_count>[0-9]+))? \\+(?<new_start>[0-9]+)(,(?<new_count>[0-9]+))? @@")
+                | "\($file): \(.new_start)-\((.new_start | tonumber) + ((.new_count // "1") | tonumber) - 1)"
+              )
+            | .[]
+            ')
+          
           echo "$CHANGES"
-          echo "pr_lines=$CHANGES" >> $GITHUB_OUTPUT
+          
+          {
+            echo "lines<<EOF"
+            echo "$CHANGES"
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
 
 #      - name: Use final files
 #        run: |
@@ -85,9 +91,9 @@ jobs:
 #          echo "final_files=$FILES" >> $GITHUB_ENV
 
 
-      - name: Use pr_lines
+      - name: Use lines
         run: |
-          echo "Changed lines: ${{ steps.pull_request_files.outputs.pr_lines }}"
+          echo "Changed lines: ${{ steps.pull_request_files.outputs.lines }}"
 
 
       - name: Cache Composer dependencies
@@ -135,4 +141,4 @@ jobs:
           file: ./src/coverage.xml
           github-token: ${{ secrets.GITHUB }}
           with-chart: false
-          pull-request-files: ${{ steps.pull_request_files.outputs.pr_lines }}
+          pull-request-files: ${{ steps.pull_request_files.outputs.lines }}
