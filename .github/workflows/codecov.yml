@@ -135,4 +135,4 @@ jobs:
           file: ./src/coverage.xml
           github-token: ${{ secrets.GITHUB }}
           with-chart: false
-          pull-request-files: ${{ steps.pull_request_files.outputs.pr_lines }}"
+          pull-request-files: ${{ steps.pull_request_files.outputs.pr_lines }}
