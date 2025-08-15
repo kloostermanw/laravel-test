@@ -28,7 +28,7 @@ jobs:
         id: pull_request_files
         run: |
           echo "Changed files and line numbers:"
-          curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          CHANGES=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             "${{ github.api_url }}/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/files" \
           | jq -r '.[] | {file: .filename, patch: .patch} | select(.patch != null)' \
           | jq -r '
@@ -41,9 +41,9 @@ jobs:
               | "\($file): \(.new_start)-\((.new_start | tonumber) + ((.new_count // "1") | tonumber) - 1)"
             )
           | .[]
-          ' > changed_files.txt
-          cat changed_files.txt
-          echo "pr_files=$(paste -sd, changed_files.txt)" >> $GITHUB_OUTPUT
+          ')
+          echo "$CHANGES"
+          echo "pr_lines=$CHANGES" >> $GITHUB_OUTPUT
 
 #      - name: Use final files
 #        run: |
@@ -85,9 +85,9 @@ jobs:
 #          echo "final_files=$FILES" >> $GITHUB_ENV
 
 
-      - name: Use final files
+      - name: Use pr_lines
         run: |
-          echo "pr_files: $pr_files"
+          echo "Changed lines: ${{ steps.pull_request_files.outputs.pr_lines }}"
 
 
       - name: Cache Composer dependencies
@@ -135,4 +135,4 @@ jobs:
           file: ./src/coverage.xml
           github-token: ${{ secrets.GITHUB }}
           with-chart: false
-          pull-request-files: ${{ env.pr_files }}
+          pull-request-files: ${{ steps.pull_request_files.outputs.pr_lines }}"
