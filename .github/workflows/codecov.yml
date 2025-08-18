@@ -11,90 +11,6 @@ jobs:
         with:
           fetch-depth: 0
 
-#      - name: Get changed files for Pull Request
-#        if: ${{ github.event_name == 'pull_request' }}
-#        id: pull_request_files
-#        run: |
-#          echo "Changed files (PR):"
-#          curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-#            "${{ github.api_url }}/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/files" \
-#            | jq -r '.[].filename' > changed_files.txt
-#          cat changed_files.txt
-#          echo "files=$(paste -sd, changed_files.txt)" >> $GITHUB_OUTPUT
-
-
-      - name: Get changed files and line changes for Pull Request
-        if: ${{ github.event_name == 'pull_request' }}
-        id: pull_request_files
-        run: |
-          echo "Changed files and line numbers:"
-          CHANGES=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            "${{ github.api_url }}/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/files" \
-          | jq -r '.[] | {file: .filename, patch: .patch} | select(.patch != null)' \
-          | jq -r '
-            .file as $file |
-            .patch
-            | split("\n")
-            | map(select(startswith("@@")))
-            | map(
-                capture("@@ -(?<old_start>[0-9]+)(,(?<old_count>[0-9]+))? \\+(?<new_start>[0-9]+)(,(?<new_count>[0-9]+))? @@")
-                | "\($file): \(.new_start)-\((.new_start | tonumber) + ((.new_count // "1") | tonumber) - 1)"
-              )
-            | .[]
-            ')
-          
-          echo "$CHANGES"
-          
-          {
-            echo "lines<<EOF"
-            echo "$CHANGES"
-            echo "EOF"
-          } >> $GITHUB_OUTPUT
-
-#      - name: Use final files
-#        run: |
-#          echo "files: $files"
-          
-
-#      - name: Get changed files for Push
-#        if: ${{ github.event_name == 'push' }}
-#        id: push_files
-#        run: |
-#          echo "Changed files (Push):"
-#          BEFORE_SHA="${{ github.event.before }}"
-#          AFTER_SHA="${{ github.sha }}"
-#          EMPTY_TREE="4b825dc642cb6eb9a060e54bf8d69288fbee4904"
-#
-#          # If BEFORE_SHA is all zeros, use the empty tree
-#          if [ "$BEFORE_SHA" = "0000000000000000000000000000000000000000" ]; then
-#            BEFORE_SHA="$EMPTY_TREE"
-#          fi
-#
-#          # If BEFORE_SHA doesn't exist locally (e.g., force push removed it), use empty tree
-#          if ! git cat-file -e "$BEFORE_SHA"^{commit} 2>/dev/null; then
-#            echo "WARNING: $BEFORE_SHA not found locally, falling back to empty tree."
-#            BEFORE_SHA="$EMPTY_TREE"
-#          fi
-#
-#          git diff --name-only "$BEFORE_SHA" "$AFTER_SHA" > changed_files.txt
-#
-#          cat changed_files.txt
-#          echo "files=$(paste -sd, changed_files.txt)" >> $GITHUB_OUTPUT
-
-
-#      - name: Set final files variable
-#        run: |
-#          FILES="${{ steps.pull_request_files.outputs.files }}"
-#          if [ -z "$FILES" ]; then
-#            FILES="${{ steps.push_files.outputs.files }}"
-#          fi
-#          echo "final_files=$FILES" >> $GITHUB_ENV
-
-
-      - name: Use lines
-        run: |
-          echo "Changed lines: ${{ steps.pull_request_files.outputs.lines }}"
-
 
       - name: Cache Composer dependencies
         uses: actions/cache@v4
@@ -141,3 +57,10 @@ jobs:
           file: ./src/coverage.xml
           github-token: ${{ secrets.GITHUB }}
           with-chart: false
+
+
+      - name: Publish coverage report to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: ./src/coverage.xml
