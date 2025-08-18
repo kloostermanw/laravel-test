@@ -57,6 +57,7 @@ jobs:
           file: ./src/coverage.xml
           github-token: ${{ secrets.GITHUB }}
           with-chart: false
+          min-line-coverage: 60
 
 
       - name: Publish coverage report to Codecov
