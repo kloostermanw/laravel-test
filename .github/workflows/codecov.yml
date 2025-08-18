@@ -100,3 +100,9 @@ jobs:
         with:
           file: ./src/coverage.xml
           files: ${{ env.final_files }}
+
+      - name: Publish coverage report to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: ./src/coverage.xml
