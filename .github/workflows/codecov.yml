@@ -1,6 +1,7 @@
 name: codecov.yml
 on:
   pull_request:
+  workflow_dispatch:
 
 jobs:
   test-code-coverage:
