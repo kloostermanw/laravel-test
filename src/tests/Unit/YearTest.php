@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Classes;
+namespace Tests\Unit;
 
 use App\Classes\Year;
 use PHPUnit\Framework\TestCase;
